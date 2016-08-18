@@ -5,6 +5,7 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.ably.BuildConfig;
 import io.ably.lib.types.Param;
 
 /**
@@ -13,12 +14,8 @@ import io.ably.lib.types.Param;
  *
  */
 public class HttpUtils {
-    public static final String DEFAULT_FORMAT = "json";
-
+	public static final String DEFAULT_FORMAT = "json";
     public static final String X_ABLY_LIB_HEADER = "X-Ably-Lib";
-
-    public static final String LIB = "java";
-    public static final String VERSION_NAME = "0.8.2";//TODO: generate BuildConfig by gradle
 
 	public static Map<String, String> mimeTypes;
 
@@ -50,18 +47,18 @@ public class HttpUtils {
     }
 
     public static String getAblyLibValue() {
-        return String.format("%s-%s", LIB, VERSION_NAME);
+        return String.format("%s-%s", BuildConfig.LIBRARY_NAME, BuildConfig.VERSION);
     }
 
-    public static Param[] defaultAcceptHeaders(boolean binary) {
-        Param[] headers;
-        if(binary) {
-            headers = new Param[]{ new Param("Accept", "application/x-msgpack,application/json") };
-        } else {
-            headers = new Param[]{ new Param("Accept", "application/json") };
-        }
-        return headers;
-    }
+	public static Param[] defaultAcceptHeaders(boolean binary) {
+		Param[] headers;
+		if(binary) {
+			headers = new Param[]{ new Param("Accept", "application/x-msgpack,application/json") };
+		} else {
+			headers = new Param[]{ new Param("Accept", "application/json") };
+		}
+		return headers;
+	}
 
 	public static String encodeParams(String path, Param[] params) {
 		StringBuilder builder = new StringBuilder(path);
