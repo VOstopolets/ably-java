@@ -3,8 +3,6 @@ package io.ably.lib.transport;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import io.ably.lib.http.HttpHeaderTest;
-import io.ably.lib.http.HttpUtils;
 import io.ably.lib.realtime.AblyRealtime;
 import io.ably.lib.realtime.Connection;
 import io.ably.lib.realtime.ConnectionState;
@@ -12,13 +10,10 @@ import io.ably.lib.test.common.Helpers;
 import io.ably.lib.test.common.Setup;
 import io.ably.lib.types.AblyException;
 import io.ably.lib.types.ClientOptions;
-import io.ably.lib.types.Param;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -197,36 +192,5 @@ public class ConnectionManagerTest {
 		 */
 		assertThat(connectionManager.getConnectionState().state, is(ConnectionState.connected));
 		assertThat(connectionManager.getHost(), is(equalTo(opts.realtimeHost)));
-	}
-
-	/**
-	 * <p>
-	 * Library and version param 'lib' should include the header value described there
-	 * {@link io.ably.lib.http.HttpUtils#X_ABLY_LIB_VALUE},
-	 * see {@link HttpHeaderTest#header_lib_channel_publish()}
-	 * </p>
-	 * <p>
-	 * Spec: RTN2g
-	 * </p>
-	 */
-	@Test
-	public void connectionmanager_param_lib() throws AblyException {
-		Setup.TestVars testVars = Setup.getTestVars();
-		ClientOptions opts = testVars.createOptions(testVars.keys[0].keyStr);
-		AblyRealtime ably = new AblyRealtime(opts);
-		ConnectionManager connectionManager = ably.connection.connectionManager;
-
-		new Helpers.ConnectionManagerWaiter(connectionManager).waitFor(ConnectionState.connected);
-
-		/* Get X-Ably-Lib param */
-		Param[] params = connectionManager.getConnectParams();
-		Param ablyLibParam = Param.getParamByKey(params, ITransport.TransportParams.LIB_PARAM_KEY);
-
-		/* Verify that,
-		 *   - X-Ably-Lib header exists
-		 *   - X-Ably-Lib header value equals correct static value
-		 */
-		assertNotNull("Expected X-Ably-Lib header", ablyLibParam);
-		assertEquals(ablyLibParam.value, HttpUtils.X_ABLY_LIB_VALUE);
 	}
 }
