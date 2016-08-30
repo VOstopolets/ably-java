@@ -78,7 +78,6 @@ public class RealitimeReauthTest {
 
             Auth.TokenDetails secondToken = ablyForToken.auth.requestToken(tokenParams, null);
             assertNotNull("Expected token value", secondToken.token);
-            System.out.println("secondToken.token = " + secondToken.token);
 
             /* reauthorise */
             Auth.AuthOptions authOptions = new Auth.AuthOptions();
@@ -87,20 +86,6 @@ public class RealitimeReauthTest {
             authOptions.force = true;
             Auth.TokenDetails reauthTokenDetails = ablyRealtime.auth.authorise(authOptions, null);
             assertNotNull("Expected token value", reauthTokenDetails.token);
-            System.out.println("reauthTokenDetails.token = " + reauthTokenDetails.token);
-
-            /* disconnect the connection, without closing;
-             * NOTE this depends on knowledge of the internal structure
-			 * of the library, to simulate a dropped transport without
-			 * causing the connection itself to be disposed */
-            ablyRealtime.connection.connectionManager.requestState(ConnectionState.failed);
-            connectionWaiter.waitFor(ConnectionState.failed);
-
-            /* wait */
-            try { Thread.sleep(1000L); } catch(InterruptedException e) {}
-
-            ablyRealtime.connection.connect();
-            connectionWaiter.waitFor(ConnectionState.connected);
 
             /* re-attach to the channel */
             waiter = new Helpers.CompletionWaiter();

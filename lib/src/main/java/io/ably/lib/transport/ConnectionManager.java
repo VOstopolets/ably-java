@@ -1,5 +1,10 @@
 package io.ably.lib.transport;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
 import io.ably.lib.debug.DebugOptions;
 import io.ably.lib.debug.RawProtocolListener;
 import io.ably.lib.realtime.AblyRealtime;
@@ -17,11 +22,6 @@ import io.ably.lib.types.Param;
 import io.ably.lib.types.ProtocolMessage;
 import io.ably.lib.types.ProtocolMessage.Action;
 import io.ably.lib.util.Log;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 
 public class ConnectionManager implements Runnable, ConnectListener {
@@ -175,6 +175,14 @@ public class ConnectionManager implements Runnable, ConnectListener {
 		requestState(ConnectionState.closing);
 	}
 
+	/** disconnect the connection, without closing;
+    * NOTE this depends on knowledge of the internal structure
+    * of the library, to simulate a dropped transport without
+    * causing the connection itself to be disposed */
+	public void disconnect() {
+		requestState(ConnectionState.failed);
+	}
+
 	public synchronized StateInfo getConnectionState() {
 		return state;
 	}
@@ -264,6 +272,17 @@ public class ConnectionManager implements Runnable, ConnectListener {
 			if(listener != null)
 				listener.onError(e.errorInfo);
 		}
+	}
+
+	public void onAuthUpdated() {
+		/* in the current protocol version we are not able to update auth params on the fly;
+		 * so disconnect, and the new auth params will be used for subsequent reconnection */
+		disconnect();
+		synchronized (this) {
+			while (state.state != ConnectionState.failed)
+				try { wait(); } catch(InterruptedException e) {}
+		}
+		connect();
 	}
 
 	/***************************************
