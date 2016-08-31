@@ -325,7 +325,17 @@ public class Auth {
 	 * @param callback (err, tokenDetails)
 	 */
 	public TokenDetails authorise(AuthOptions options, TokenParams params) throws AblyException {
-		return tokenAuth.authorise(options, params);
+		TokenDetails tokenDetails = tokenAuth.authorise(options, params);
+
+		/* RTC8
+		*  If authorise is called with AuthOptions#force set to true
+		*  the client will obtain a new token, disconnect the current transport
+		*  and resume the connection
+		* */
+		if (options!=null && options.force && ably instanceof AblyRealtime) {
+			((AblyRealtime) ably).connection.connectionManager.onAuthUpdated();
+		}
+		return tokenDetails;
 	}
 
 	/**
@@ -434,7 +444,7 @@ public class Auth {
 		}
 
 		String tokenPath = "/keys/" + signedTokenRequest.keyName + "/requestToken";
-		TokenDetails tokenDetails = ably.http.post(tokenPath, tokenOptions.authHeaders, tokenOptions.authParams, new Http.JSONRequestBody(signedTokenRequest.asJSON().toString()), new ResponseHandler<TokenDetails>() {
+		return ably.http.post(tokenPath, tokenOptions.authHeaders, tokenOptions.authParams, new Http.JSONRequestBody(signedTokenRequest.asJSON().toString()), new ResponseHandler<TokenDetails>() {
 			@Override
 			public TokenDetails handleResponse(int statusCode, String contentType, Collection<String> linkHeaders, byte[] body) throws AblyException {
 				try {
@@ -446,15 +456,6 @@ public class Auth {
 				}
 			}
 		});
-		/* RTC8
-		*  If authorise is called with AuthOptions#force set to true
-		*  the client will obtain a new token, disconnect the current transport
-		*  and resume the connection
-		* */
-		if (tokenOptions.force && ably instanceof AblyRealtime) {
-			((AblyRealtime) ably).connection.connectionManager.onAuthUpdated();
-		}
-		return tokenDetails;
 	}
 
 	/**

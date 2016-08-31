@@ -274,15 +274,45 @@ public class ConnectionManager implements Runnable, ConnectListener {
 		}
 	}
 
+	/**
+	 * in the current protocol version we are not able to update auth params on the fly;
+	 * so disconnect, and the new auth params will be used for subsequent reconnection
+	 */
 	public void onAuthUpdated() {
-		/* in the current protocol version we are not able to update auth params on the fly;
-		 * so disconnect, and the new auth params will be used for subsequent reconnection */
+		connection.once(ConnectionState.failed, new ConnectionStateListener() {
+			@Override
+			public void onConnectionStateChanged(ConnectionStateChange state) {
+				synchronized (ConnectionManager.this) {
+					ConnectionManager.this.notify();
+				}
+
+			}
+		});
 		disconnect();
-		synchronized (this) {
-			while (state.state != ConnectionState.failed)
-				try { wait(); } catch(InterruptedException e) {}
+		synchronized (this){
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
+		connection.once(ConnectionState.connected, new ConnectionStateListener() {
+			@Override
+			public void onConnectionStateChanged(ConnectionStateChange state) {
+				synchronized (ConnectionManager.this) {
+					ConnectionManager.this.notify();
+				}
+
+			}
+		});
 		connect();
+		synchronized (this){
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/***************************************
